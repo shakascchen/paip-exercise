@@ -2,7 +2,9 @@
 
 (defpackage paip-exercise-chap3
   (:use :cl)
-  (:export #:dotted-expression))
+  (:export #:dotted-expression
+           #:print-expression
+           #:length-reduce))
 (in-package :paip-exercise-chap3)
 
 ;;; 3.1
@@ -25,3 +27,22 @@
         (princ " . ")
         (dotted-expression (cdr form))
         (princ ")"))))
+
+;;; 3.4
+(defun print-expression (form &key dotted-expression-p)
+  (if dotted-expression-p
+      (dotted-expression form)
+      (print form)))
+
+;;; 3.6
+'(local-a local-b local-b global-a global-b)
+
+
+
+;;; 3.9
+(defun length-reduce (list)
+  (reduce '+
+          (mapcar (lambda (elt) 1)
+                  list)))
+
+

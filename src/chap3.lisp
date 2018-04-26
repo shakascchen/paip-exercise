@@ -17,6 +17,7 @@
 (cons 'a '(b))
 (list* 'a '(b))
 
+
 ;;; 3.3
 (defun dotted-expression (form)
   (if (atom form)
@@ -37,6 +38,10 @@
 ;;; 3.6
 '(local-a local-b local-b global-a global-b)
 
+;;; 3.7
+;; A: the first found in the list
+
+;;; 3.8
 
 
 ;;; 3.9

@@ -19,21 +19,42 @@
 
 
 ;;; 3.3
-(defun dotted-expression (form)
+
+;; defined for exercise 3.4
+(defmacro print-when-print-parenthesis-p (character)
+  `(when print-parenthesis-p
+     (princ ,character)))
+
+(defun dotted-expression (form &key (print-parenthesis-p t))
   (if (atom form)
       (princ form)
       (progn
-        (princ "(")
+        (print-when-print-parenthesis-p #\()
         (dotted-expression (car form))
         (princ " . ")
         (dotted-expression (cdr form))
-        (princ ")"))))
+        (print-when-print-parenthesis-p #\))
+        form)))
 
 ;;; 3.4
-(defun print-expression (form &key dotted-expression-p)
-  (if dotted-expression-p
-      (dotted-expression form)
-      (print form)))
+(defun print-expression (form &rest rest &key (print-parenthesis-p t))
+  (cond ((null form))
+        ((and (consp form)
+              (listp (cdr form)))
+         (print-when-print-parenthesis-p #\()
+         (print-expression (car form))
+         (when (cdr form)
+           (princ #\Space))
+         (print-expression (cdr form)
+                           :print-parenthesis-p nil)
+         (print-when-print-parenthesis-p #\))
+         form)
+        (t (apply 'dotted-expression
+                  (cons form
+                        rest)))))
+
+;;; 3.5
+
 
 ;;; 3.6
 '(local-a local-b local-b global-a global-b)

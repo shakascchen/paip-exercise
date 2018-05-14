@@ -6,10 +6,12 @@
   :version "0.1.0"
   :author ""
   :license ""
-  :depends-on ()
+  :depends-on (:trees
+               :anaphora
+               :paip)
   :components ((:module "src"
                 :components
-                ((:file "paip-exercise"))))
+                ((:file "chap3"))))
   :description ""
   :long-description
   #.(read-file-string

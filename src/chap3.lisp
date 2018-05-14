@@ -4,7 +4,8 @@
   (:use :cl)
   (:export #:dotted-expression
            #:print-expression
-           #:length-reduce))
+           #:length-reduce
+           #:find-all))
 (in-package :paip-exercise-chap3)
 
 ;;; 3.1
@@ -55,7 +56,6 @@
 
 ;;; 3.5
 
-
 ;;; 3.6
 '(local-a local-b local-b global-a global-b)
 
@@ -63,7 +63,28 @@
 ;; A: the first found in the list
 
 ;;; 3.8
-
+(defun find-all (item sequence &rest keyword-args
+                 &key (test #'eql) test-not &allow-other-keys)
+  "Find all those elements of sequence that match item,
+  according to the keywords.  Doesn't alter sequence."
+  (macrolet ((set-key-f (key-symbol)
+               `(let ((key-symbol-keyword ,(intern (symbol-name key-symbol)
+                                                   :keyword)))
+                  (anaphora:awhen (position ,(intern (symbol-name key-symbol)
+                                                     :keyword)
+                                            keyword-args
+                                            :from-end t)
+                    (setf ,key-symbol
+                          (getf (subseq keyword-args
+                                        anaphora:it)
+                                key-symbol-keyword))))))
+    (set-key-f test)
+    (set-key-f test-not))
+  (if test-not
+      (apply #'remove item sequence 
+             :test-not (complement test-not) keyword-args)
+      (apply #'remove item sequence
+             :test (complement test) keyword-args)))
 
 ;;; 3.9
 (defun length-reduce (list)

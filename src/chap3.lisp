@@ -5,6 +5,7 @@
   (:export #:dotted-expression
            #:print-expression
            #:length-reduce
+           #:length-reduce-by-key
            #:find-all
            #:sentence))
 (in-package :paip-exercise-chap3)
@@ -68,19 +69,12 @@
                  &key (test #'eql) test-not &allow-other-keys)
   "Find all those elements of sequence that match item,
   according to the keywords.  Doesn't alter sequence."
-  (macrolet ((set-key-f (key-symbol)
-               `(let ((key-symbol-keyword ,(intern (symbol-name key-symbol)
-                                                   :keyword)))
-                  (anaphora:awhen (position ,(intern (symbol-name key-symbol)
-                                                     :keyword)
-                                            keyword-args
-                                            :from-end t)
-                    (setf ,key-symbol
-                          (getf (subseq keyword-args
-                                        anaphora:it)
-                                key-symbol-keyword))))))
-    (set-key-f test)
-    (set-key-f test-not))
+  (setf test
+        (or (getf :test keyword-args)
+            test))
+  (setf test-not
+        (or (getf :test-not keyword-args)
+            test-not))
   (if test-not
       (apply #'remove item sequence 
              :test-not (complement test-not) keyword-args)
@@ -92,6 +86,11 @@
   (reduce '+
           (mapcar (lambda (elt) 1)
                   list)))
+
+(defun length-reduce-by-key (list)
+  (reduce '+
+          list
+          :key (lambda (x) 1)))
 
 ;;; 3.10
 (describe 'cl:lcm)

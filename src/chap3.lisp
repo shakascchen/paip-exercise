@@ -58,7 +58,7 @@
 ;;; 3.5
 
 ;;; 3.6
-'(local-a local-b local-b global-a global-b)
+'(local-a local-b local-b global-a local-b) ; notice the different between dynamical variable, lexical variable, and global variable!!
 
 ;;; 3.7
 ;; A: the first found in the list

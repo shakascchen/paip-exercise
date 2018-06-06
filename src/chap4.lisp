@@ -30,5 +30,57 @@
 
 (defun permutations (list)
   (%permutations (remove-duplicates list)))
-   
 
+
+;; 4.3
+(in-package :paip)
+(defparameter *dessert-ops*
+  (list (op 'eat-ice-cream
+            :preconds '(has-ice-cream)
+            :add-list '(ate-ice-cream ate-dessert)
+            :del-list '(has-ice-cream))
+        (op 'get-free-ice-cream
+            :preconds '(bought-the-cake ate-the-cake)
+            :add-list '(has-ice-cream)
+            :del-list nil)
+        (op 'eat-the-cake
+            :preconds '(has-cake)
+            :add-list '(ate-the-cake ate-dessert)
+            :del-list '(has-cake))
+        (op 'buy-the-cake
+            :preconds '(has-money)
+            :add-list '(has-cake bought-the-cake)
+            :del-list '(has-money))))
+
+(defvar *final-goals*)
+
+(defun GPS (state goals &optional (*ops* *ops*))
+  "General Problem Solver: from state, achieve goals using *ops*."
+  (let ((*final-goals* goals))
+    (find-all-if #'action-p
+                 (achieve-all (cons '(start) state) goals nil))))
+
+(defun achieve-each (state goals goal-stack)
+  "Achieve each goal, and make sure they still hold at the end."
+  (let ((current-state state))
+    (if (and (every #'(lambda (g)
+                        (prog1 (setf current-state
+                                     (achieve current-state g goal-stack))
+                          (when (subsetp *final-goals* current-state :test #'equal)
+                            (return-from achieve-each current-state))))
+                    goals)
+             (subsetp goals current-state :test #'equal))
+        current-state)))
+
+(defun apply-op (state goal op goal-stack)
+  "Return a new, transformed state if op is applicable."
+  (dbg-indent :gps (length goal-stack) "Consider: ~a" (op-action op))
+  (let ((state2 (achieve-all state (op-preconds op) 
+                             (cons goal goal-stack))))
+    (cond ((subsetp *final-goals* state2 :test #'equal) state2)
+          ;; Return an updated state
+          (state2 (dbg-indent :gps (length goal-stack) "Action: ~a" (op-action op))
+                  (append (remove-if #'(lambda (x) 
+                                         (member-equal x (op-del-list op)))
+                                     state2)
+                          (op-add-list op))))))

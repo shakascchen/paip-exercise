@@ -86,3 +86,29 @@
                           (op-add-list op))))))
 
 ;;; 4.4
+(defun achieve (state goal goal-stack remaining-goals)
+  "A goal is achieved if it already holds,
+  or if there is an appropriate op for it that is applicable."
+  (dbg-indent :gps (length goal-stack) "Goal: ~a" goal)
+  (cond ((member-equal goal state) state)
+        ((member-equal goal goal-stack) nil)
+        (t (some #'(lambda (op)
+                     (achieve-all (apply-op state goal op goal-stack)
+                                  remaining-goals
+                                  goal-stack))
+                 (appropriate-ops goal state))))) 
+
+(defun achieve-each (state goals goal-stack)
+  "Achieve each goal, and make sure they still hold at the end."
+  (let ((current-state state))
+    (if (and (every #'(lambda (g)
+                        (prog1 (setf current-state
+                                     (achieve current-state
+                                              g
+                                              goal-stack
+                                              (remove g goals)))
+                          (when (subsetp *final-goals* current-state :test #'equal)
+                            (return-from achieve-each current-state))))
+                    goals)
+             (subsetp goals current-state :test #'equal))
+        current-state)))

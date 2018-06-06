@@ -5,7 +5,7 @@
   (:export #:permutations))
 
 
-;; 4.1 
+;;; 4.1 
 (in-package :paip)
 (defun dbg-indent (id indent format-string &rest args)
   "Print indented debugging info if (DEBUG ID) has been specified."
@@ -18,7 +18,7 @@
 
 (in-package :paip-exercise-chap4)
 
-;; 4.2
+;;; 4.2
 (defun %permutations (list)
   (if (cdr list)
       (mapcan (lambda (elt)
@@ -32,7 +32,7 @@
   (%permutations (remove-duplicates list)))
 
 
-;; 4.3
+;;; 4.3
 (in-package :paip)
 (defparameter *dessert-ops*
   (list (op 'eat-ice-cream
@@ -84,3 +84,5 @@
                                          (member-equal x (op-del-list op)))
                                      state2)
                           (op-add-list op))))))
+
+;;; 4.4

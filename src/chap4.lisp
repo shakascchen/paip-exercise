@@ -19,18 +19,14 @@
 (in-package :paip-exercise-chap4)
 
 ;;; 4.2
-(defun %permutations (list)
-  (if (cdr list)
+(defun permutations (list)
+  (if list
       (mapcan (lambda (elt)
                 (mapcar (lambda (sub-permutations)
                           (cons elt sub-permutations))
-                        (%permutations (remove elt list))))
+                        (permutations (remove elt list :count 1))))
               list)
-      (list list)))
-
-(defun permutations (list)
-  (%permutations (remove-duplicates list)))
-
+      '(())))
 
 ;;; 4.3
 (in-package :paip)

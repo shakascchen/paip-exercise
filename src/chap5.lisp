@@ -114,6 +114,14 @@
 
 (defvar *eliza-memory* nil)
 
+(defvar *synonym-hash-table* (make-hash-table :test 'equal))
+
+(defun defsynonym (&rest rest)
+  (mapc (lambda (synonym)
+          (setf (gethash synonym *synonym-hash-table*)
+                (first rest)))
+        rest))
+
 (defun clear-eliza-memory ()
   (setf *eliza-memory* nil))
 
@@ -125,7 +133,39 @@
                      :test #'eql)))
         alist))
 
+(defun equal-synonym (x y)
+  (if (and (listp x) (listp y))
+      (mapcar (lambda (list)
+                (let ((new-list (copy-list list)))
+                  (loop for synonym being the hash-key of *synonym-hash-table*
+                        do (anaphora:awhen (search synonym new-list :test #'equal)
+                             (setf (nth anaphora:it new-list
+                                   (replace new-list
+                                            (gethash synonym *synonym-hash-table*)
+                                            :start1 anaphora:it))))))))))
+                                            
+      
+
 (defun do-5.7 ()
+  (mapc (lambda (synonyms)
+          (apply 'defsynonym synonyms))
+        '(((everyone) (everybody))
+          ((family) (father) (mother))
+          ((don't) (do not))))
+        
+  (defun pat-match (pattern input &optional (bindings no-bindings))
+    "Match pattern against input in the context of the bindings"
+    (cond ((eq bindings fail) fail)
+          ((variable-p pattern)
+           (match-variable pattern input bindings))
+          ((eql pattern input) bindings)
+          ((segment-pattern-p pattern)                
+           (segment-match pattern input bindings))    
+          ((and (consp pattern) (consp input)) 
+           (pat-match (rest pattern) (rest input)
+                      (pat-match (first pattern) (first input) 
+                                 bindings)))
+          (t fail)))
   (defun use-eliza-rules (input)
     "Find some rule with which to transform the input."
     (some #'(lambda (rule)

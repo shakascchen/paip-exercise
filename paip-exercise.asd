@@ -6,7 +6,8 @@
   :version "0.1.0"
   :author ""
   :license ""
-  :depends-on (:anaphora
+  :depends-on (:alexandria
+               :anaphora
                :paip)
   :components ((:module "src"
                 :components

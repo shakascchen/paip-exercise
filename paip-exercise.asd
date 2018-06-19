@@ -6,12 +6,13 @@
   :version "0.1.0"
   :author ""
   :license ""
-  :depends-on (:trees
-               :anaphora
+  :depends-on (:anaphora
                :paip)
   :components ((:module "src"
                 :components
-                ((:file "chap3"))))
+                ((:file "chap3")
+                 (:file "eliza-basic")
+                 (:file "chap5"))))
   :description ""
   :long-description
   #.(read-file-string

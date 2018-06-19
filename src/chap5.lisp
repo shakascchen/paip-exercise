@@ -1,7 +1,8 @@
 (in-package :cl-user)
 
 (defpackage paip-exercise-chap5
-  (:use :cl :paip))
+  (:use :cl :paip-exercise-eliza-basic)
+  (:export #:eliza-5.6))
 
 (in-package :paip-exercise-chap5)
 
@@ -76,3 +77,22 @@
 ;; GO ON 
 ;; ELIZA> 
 
+;;; 5.4
+;; because quote is legal for (read) . double quote requires complete pairs of it. comma has to be inside backtick
+;; '(a ' c d)
+;; (A 'C D)
+;; PAIP> ''a
+;; 'A
+;; PAIP> '''a
+;; ''A
+
+;;; 5.6
+
+(defun eliza-5.6 ()
+  "Respond to user input using pattern matching rules."
+  (loop
+    (print 'eliza>)
+    (format t "~{~a~^ ~}" (flatten (use-eliza-rules (anaphora:aprog1 (read)
+                                                      (when (equal anaphora:it
+                                                                   '(sayoonara))
+                                                        (return-from eliza-5.6))))))))

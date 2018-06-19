@@ -6,6 +6,8 @@
 
 (in-package :paip-exercise-chap5)
 
+(defvar *eliza-basic* (symbol-function 'eliza))
+
 ;;; 5.1
 ;; no, recall the reason! The answer is in the book.
 

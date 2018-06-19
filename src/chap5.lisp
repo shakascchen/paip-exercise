@@ -2,11 +2,18 @@
 
 (defpackage paip-exercise-chap5
   (:use :cl :paip-exercise-eliza-basic)
-  (:export #:eliza-5.6))
+  (:export #:eliza
+           #:do-5.6
+           #:undo-5.6
+           #:clear-eliza-memory
+           #:do-5.7
+           #:undo-5.7))
 
 (in-package :paip-exercise-chap5)
 
 (defvar *eliza-basic* (symbol-function 'eliza))
+
+(defvar *use-eliza-rules* (symbol-function 'use-eliza-rules))
 
 ;;; 5.1
 ;; no, recall the reason! The answer is in the book.
@@ -103,3 +110,43 @@
 (defun undo-5.6 ()
   (setf (symbol-function 'eliza) *eliza-basic*))
 
+;;; 5.7
+
+(defvar *eliza-memory* nil)
+
+(defun clear-eliza-memory ()
+  (setf *eliza-memory* nil))
+
+(defun expand-eliza-memory (alist)
+  (mapc (lambda (cons)
+          (anaphora:awhen (cdr cons)
+            (pushnew anaphora:it
+                     *eliza-memory*
+                     :test #'eql)))
+        alist))
+
+(defun do-5.7 ()
+  (defun use-eliza-rules (input)
+    "Find some rule with which to transform the input."
+    (some #'(lambda (rule)
+              (let ((result (expand-eliza-memory (pat-match (rule-pattern rule) input))))
+                (if (not (eq result fail))
+                    (sublis (switch-viewpoint result)
+                            (random-elt (rule-responses rule))))))
+          *eliza-rules*))
+  (defun eliza ()
+    "Respond to user input using pattern matching rules."
+    (loop
+      (print 'eliza>)
+      (format t "~{~a~^ ~}" (flatten (or (use-eliza-rules (anaphora:aprog1 (read)
+                                                            (when (equal anaphora:it
+                                                                         '(sayoonara))
+                                                              (return-from eliza))))
+                                         (when *eliza-memory*
+                                           `(Tell me more about ,(random-elt *eliza-memory*)))))))))
+
+(defun undo-5.7 ()
+  (values (setf (symbol-function 'use-eliza-rules)
+                *use-eliza-rules*)
+          (setf (symbol-function 'eliza)
+                *eliza-basic*)))

@@ -8,6 +8,8 @@
 
 (defconstant no-bindings '((t . t)))
 
+(defvar *eliza-basic* nil)
+
 (defun starts-with (list x)
   "Is x a list whose first element is x?"
   (and (consp list) (eql (first list) x)))
@@ -170,5 +172,8 @@
   "Choose an element from a list at random."
   (elt choices (random (length choices))))
 
+(setf *eliza-basic* (symbol-function 'eliza))
+
 (let ((pack (find-package :paip-exercise-eliza-basic)))
   (do-all-symbols (sym pack) (when (eql (symbol-package sym) pack) (export sym))))
+

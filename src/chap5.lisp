@@ -88,11 +88,16 @@
 
 ;;; 5.6
 
-(defun eliza-5.6 ()
-  "Respond to user input using pattern matching rules."
-  (loop
-    (print 'eliza>)
-    (format t "~{~a~^ ~}" (flatten (use-eliza-rules (anaphora:aprog1 (read)
-                                                      (when (equal anaphora:it
-                                                                   '(sayoonara))
-                                                        (return-from eliza-5.6))))))))
+(defun do-5.6 ()
+  (defun eliza ()
+    "Respond to user input using pattern matching rules."
+    (loop
+      (print 'eliza>)
+      (format t "~{~a~^ ~}" (flatten (use-eliza-rules (anaphora:aprog1 (read)
+                                                        (when (equal anaphora:it
+                                                                     '(sayoonara))
+                                                          (return-from eliza)))))))))
+
+(defun undo-5.6 ()
+  (setf (symbol-function 'eliza) *eliza-basic*))
+

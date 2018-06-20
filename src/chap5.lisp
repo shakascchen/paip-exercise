@@ -185,3 +185,9 @@
                 *eliza-basic*)
           (clrhash *synonym-hash-table*)))
   
+;;; 5.10
+;; it's tricky! think again!
+
+;;; 5.11
+;; fail appears 7 times while no-bindings appears only twice.
+;; it's easier to treat no-bindings special

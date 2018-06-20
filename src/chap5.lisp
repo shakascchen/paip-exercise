@@ -200,7 +200,7 @@
 ;; it's tricky! think again!
 
 ;;; 5.11
-;; for the advantage see the function extend-bindings
+;; for the advantage see the function extend-bindings and pat-match comments
 
 (defparameter *no-bindings-as-nil* nil)
 
@@ -219,7 +219,7 @@
              ((equal input (binding-val binding)) bindings)
              (t :fail))))
    
-   (defun pat-match (pattern input &optional (bindings *no-bindings-as-nil*))
+   (defun pat-match (pattern input &optional bindings) ; and bindings here is already default to nil
      "Match pattern against input in the context of the bindings"
      (cond ((eq bindings :fail) :fail)
            ((variable-p pattern)
@@ -272,3 +272,76 @@
   
 
 ;;; 5.12
+
+(defun do-5.12 ()
+  (values
+   (defun extend-bindings (var val bindings)
+     "Add a (var . value) pair to a binding list."
+     (cons (cons var val)
+           ;; here becomes so simple in 5.11
+           bindings))
+   
+   (defun match-variable (var input bindings)
+     "Does VAR match input?  Uses (or updates) and returns bindings."
+     ;; default nil means fail
+     (let ((binding (get-binding var bindings)))
+       (cond ((not binding)
+              (values t (extend-bindings var input bindings)))
+             ((equal input (binding-val binding))
+              (values t bindings)))))
+   
+   (defun pat-match (pattern input &optional (not-failed-yet t) bindings)
+     "Match pattern against input in the context of the bindings"
+     ;; default value of cond is nil - means fail
+     (cond ((null not-failed-yet) fail)
+           ((variable-p pattern)
+            (match-variable pattern input bindings))
+           ((eql pattern input) (values t bindings))
+           ((segment-pattern-p pattern)                
+            (segment-match pattern input bindings))    
+           ((and (consp pattern) (consp input)) 
+            (multiple-value-call 'pat-match
+              (rest pattern)
+              (rest input)
+              (pat-match (first pattern) (first input) t bindings)))))
+
+   (defun segment-match (pattern input bindings &optional (start 0))
+     "Match the segment pattern ((?* var) . pat) against input."
+     (let ((var (second (first pattern)))
+           (pat (rest pattern)))
+       (if (null pat)
+           (match-variable var input bindings)
+           ;; We assume that pat starts with a constant
+           ;; In other words, a pattern can't have 2 consecutive vars
+           (let ((pos (position (first pat) input
+                                :start start :test #'equal)))
+             (if (null pos)
+                 fail
+                 (multiple-value-bind (match-p b2)
+                     (multiple-value-call 'pat-match
+                       pat
+                       (subseq input pos)
+                       (match-variable var
+                                       (subseq input 0 pos)
+                                       bindings))
+                   ;; If this match failed, try another longer one
+                   (if match-p
+                       b2
+                       (segment-match pattern input bindings (+ pos 1)))))))))
+
+   (defun use-eliza-rules (input)
+     "Find some rule with which to transform the input."
+     (some #'(lambda (rule)
+               (multiple-value-bind (match-p result)
+                   (pat-match (rule-pattern rule) input)
+                 (when match-p
+                   (sublis (switch-viewpoint result)
+                           (random-elt (rule-responses rule))))))
+           *eliza-rules*))))
+
+(defun undo-5.12 ()
+  (values (setf (symbol-function 'segment-match) *segment-match*)
+          (setf (symbol-function 'pat-match) *pat-match*)
+          (setf (symbol-function 'match-variable) *match-variable*)
+          (setf (symbol-function 'extend-bindings) *extend-bindings*)
+          (setf (symbol-function 'use-eliza-rules) *use-eliza-rules*)))

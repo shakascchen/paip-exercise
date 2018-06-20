@@ -272,6 +272,8 @@
   
 
 ;;; 5.12
+;; besides code shortening, the meaning of bindings and match-p are separated so the api is more clear
+
 
 (defun do-5.12 ()
   (values
@@ -284,6 +286,7 @@
    (defun match-variable (var input bindings)
      "Does VAR match input?  Uses (or updates) and returns bindings."
      ;; default nil means fail
+     ;; code is shorter for fail = nil with 5.11 according to the request of 5.12
      (let ((binding (get-binding var bindings)))
        (cond ((not binding)
               (values t (extend-bindings var input bindings)))
@@ -293,6 +296,7 @@
    (defun pat-match (pattern input &optional (not-failed-yet t) bindings)
      "Match pattern against input in the context of the bindings"
      ;; default value of cond is nil - means fail
+     ;; code is shorter for fail = nil with 5.11 according to the request of 5.12
      (cond ((null not-failed-yet) fail)
            ((variable-p pattern)
             (match-variable pattern input bindings))

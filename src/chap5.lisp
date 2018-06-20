@@ -326,7 +326,7 @@
                                        bindings))
                    ;; If this match failed, try another longer one
                    (if match-p
-                       b2
+                       (values t b2)
                        (segment-match pattern input bindings (+ pos 1)))))))))
 
    (defun use-eliza-rules (input)

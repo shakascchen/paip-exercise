@@ -133,52 +133,45 @@
                      :test #'eql)))
         alist))
 
-(defun equal-synonym (x y)
-  (if (and (listp x) (listp y))
-      (mapcar (lambda (list)
-                (let ((new-list (copy-list list)))
-                  (loop for synonym being the hash-key of *synonym-hash-table*
-                        do (anaphora:awhen (search synonym new-list :test #'equal)
-                             (setf (nth anaphora:it new-list
-                                   (replace new-list
-                                            (gethash synonym *synonym-hash-table*)
-                                            :start1 anaphora:it))))))))))
-                                            
-      
-
+(defun normalize-synonym (list)
+  (let ((new-list (copy-list list)))
+    (loop for synonym being the hash-key of *synonym-hash-table*
+          do (anaphora:awhen (search synonym new-list :test #'equal)
+               (setf new-list
+                     (concatenate 'list
+                                  (subseq new-list 0 anaphora:it)
+                                  (gethash synonym *synonym-hash-table*)
+                                  (subseq new-list
+                                          (+ anaphora:it (length synonym)))))))
+    new-list))
+  
 (defun do-5.7 ()
   (mapc (lambda (synonyms)
           (apply 'defsynonym synonyms))
         '(((everyone) (everybody))
           ((family) (father) (mother))
+          ((hope) (wish))
+          ((how are you doing.) (how do you do.))
           ((don't) (do not))))
-        
-  (defun pat-match (pattern input &optional (bindings no-bindings))
-    "Match pattern against input in the context of the bindings"
-    (cond ((eq bindings fail) fail)
-          ((variable-p pattern)
-           (match-variable pattern input bindings))
-          ((eql pattern input) bindings)
-          ((segment-pattern-p pattern)                
-           (segment-match pattern input bindings))    
-          ((and (consp pattern) (consp input)) 
-           (pat-match (rest pattern) (rest input)
-                      (pat-match (first pattern) (first input) 
-                                 bindings)))
-          (t fail)))
-  (defun use-eliza-rules (input)
-    "Find some rule with which to transform the input."
-    (some #'(lambda (rule)
-              (let ((result (expand-eliza-memory (pat-match (rule-pattern rule) input))))
-                (if (not (eq result fail))
-                    (sublis (switch-viewpoint result)
-                            (random-elt (rule-responses rule))))))
-          *eliza-rules*))
+
+  (let ((eliza-rules (mapcar (lambda (rule)
+                                 (mapcar 'normalize-synonym
+                                         rule))
+                               *eliza-rules*)))
+    (defun use-eliza-rules (input)
+      "Find some rule with which to transform the input."
+      (some #'(lambda (rule)
+                (let ((result (expand-eliza-memory (pat-match (rule-pattern rule) input))))
+                  (if (not (eq result fail))
+                      (sublis (switch-viewpoint result)
+                              (random-elt (rule-responses rule))))))
+            eliza-rules)))
+  
   (defun eliza ()
     "Respond to user input using pattern matching rules."
     (loop
       (print 'eliza>)
-      (format t "~{~a~^ ~}" (flatten (or (use-eliza-rules (anaphora:aprog1 (read)
+      (format t "~{~a~^ ~}" (flatten (or (use-eliza-rules (anaphora:aprog1 (normalize-synonym (read))
                                                             (when (equal anaphora:it
                                                                          '(sayoonara))
                                                               (return-from eliza))))
@@ -189,4 +182,6 @@
   (values (setf (symbol-function 'use-eliza-rules)
                 *use-eliza-rules*)
           (setf (symbol-function 'eliza)
-                *eliza-basic*)))
+                *eliza-basic*)
+          (clrhash *synonym-hash-table*)))
+  

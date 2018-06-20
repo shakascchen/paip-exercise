@@ -7,13 +7,23 @@
            #:undo-5.6
            #:clear-eliza-memory
            #:do-5.7
-           #:undo-5.7))
+           #:undo-5.7
+           #:do-5.11
+           #:undo-5.11))
 
 (in-package :paip-exercise-chap5)
 
-(defvar *eliza-basic* (symbol-function 'eliza))
+(defvar *segment-match* (symbol-function 'segment-match))
+
+(defvar *pat-match* (symbol-function 'pat-match))
+
+(defvar *match-variable* (symbol-function 'match-variable))
+
+(defvar *extend-bindings* (symbol-function 'extend-bindings))
 
 (defvar *use-eliza-rules* (symbol-function 'use-eliza-rules))
+
+(defvar *eliza-basic* (symbol-function 'eliza))
 
 ;;; 5.1
 ;; no, recall the reason! The answer is in the book.
@@ -146,37 +156,38 @@
     new-list))
   
 (defun do-5.7 ()
-  (mapc (lambda (synonyms)
-          (apply 'defsynonym synonyms))
-        '(((everyone) (everybody))
-          ((family) (father) (mother))
-          ((hope) (wish))
-          ((how are you doing.) (how do you do.))
-          ((don't) (do not))))
+  (values 
+   (mapc (lambda (synonyms)
+           (apply 'defsynonym synonyms))
+         '(((everyone) (everybody))
+           ((family) (father) (mother))
+           ((hope) (wish))
+           ((how are you doing.) (how do you do.))
+           ((don't) (do not))))
 
-  (let ((eliza-rules (mapcar (lambda (rule)
-                                 (mapcar 'normalize-synonym
-                                         rule))
-                               *eliza-rules*)))
-    (defun use-eliza-rules (input)
-      "Find some rule with which to transform the input."
-      (some #'(lambda (rule)
-                (let ((result (expand-eliza-memory (pat-match (rule-pattern rule) input))))
-                  (if (not (eq result fail))
-                      (sublis (switch-viewpoint result)
-                              (random-elt (rule-responses rule))))))
-            eliza-rules)))
-  
-  (defun eliza ()
-    "Respond to user input using pattern matching rules."
-    (loop
-      (print 'eliza>)
-      (format t "~{~a~^ ~}" (flatten (or (use-eliza-rules (anaphora:aprog1 (normalize-synonym (read))
-                                                            (when (equal anaphora:it
-                                                                         '(sayoonara))
-                                                              (return-from eliza))))
-                                         (when *eliza-memory*
-                                           `(Tell me more about ,(random-elt *eliza-memory*)))))))))
+   (let ((eliza-rules (mapcar (lambda (rule)
+                                (mapcar 'normalize-synonym
+                                        rule))
+                              *eliza-rules*)))
+     (defun use-eliza-rules (input)
+       "Find some rule with which to transform the input."
+       (some #'(lambda (rule)
+                 (let ((result (expand-eliza-memory (pat-match (rule-pattern rule) input))))
+                   (if (not (eq result fail))
+                       (sublis (switch-viewpoint result)
+                               (random-elt (rule-responses rule))))))
+             eliza-rules)))
+   
+   (defun eliza ()
+     "Respond to user input using pattern matching rules."
+     (loop
+       (print 'eliza>)
+       (format t "~{~a~^ ~}" (flatten (or (use-eliza-rules (anaphora:aprog1 (normalize-synonym (read))
+                                                             (when (equal anaphora:it
+                                                                          '(sayoonara))
+                                                               (return-from eliza))))
+                                          (when *eliza-memory*
+                                            `(Tell me more about ,(random-elt *eliza-memory*))))))))))
 
 (defun undo-5.7 ()
   (values (setf (symbol-function 'use-eliza-rules)
@@ -189,5 +200,75 @@
 ;; it's tricky! think again!
 
 ;;; 5.11
-;; fail appears 7 times while no-bindings appears only twice.
-;; it's easier to treat no-bindings special
+;; for the advantage see the function extend-bindings
+
+(defparameter *no-bindings-as-nil* nil)
+
+(defun do-5.11 ()
+  (values
+   (defun extend-bindings (var val bindings)
+     "Add a (var . value) pair to a binding list."
+     (cons (cons var val)
+           ;; here becomes so simple in 5.11
+           bindings))
+   
+   (defun match-variable (var input bindings)
+     "Does VAR match input?  Uses (or updates) and returns bindings."
+     (let ((binding (get-binding var bindings)))
+       (cond ((not binding) (extend-bindings var input bindings))
+             ((equal input (binding-val binding)) bindings)
+             (t :fail))))
+   
+   (defun pat-match (pattern input &optional (bindings *no-bindings-as-nil*))
+     "Match pattern against input in the context of the bindings"
+     (cond ((eq bindings :fail) :fail)
+           ((variable-p pattern)
+            (match-variable pattern input bindings))
+           ((eql pattern input) bindings)
+           ((segment-pattern-p pattern)                
+            (segment-match pattern input bindings))    
+           ((and (consp pattern) (consp input)) 
+            (pat-match (rest pattern) (rest input)
+                       (pat-match (first pattern) (first input) 
+                                  bindings)))
+           (t :fail)))
+   
+   (defun segment-match (pattern input bindings &optional (start 0))
+     "Match the segment pattern ((?* var) . pat) against input."
+     (let ((var (second (first pattern)))
+           (pat (rest pattern)))
+       (if (null pat)
+           (match-variable var input bindings)
+           ;; We assume that pat starts with a constant
+           ;; In other words, a pattern can't have 2 consecutive vars
+           (let ((pos (position (first pat) input
+                                :start start :test #'equal)))
+             (if (null pos)
+                 :fail
+                 (let ((b2 (pat-match
+                            pat (subseq input pos)
+                            (match-variable var (subseq input 0 pos)
+                                            bindings))))
+                   ;; If this match failed, try another longer one
+                   (if (eq b2 :fail)
+                       (segment-match pattern input bindings (+ pos 1))
+                       b2)))))))
+
+   (defun use-eliza-rules (input)
+     "Find some rule with which to transform the input."
+     (some #'(lambda (rule)
+               (let ((result (pat-match (rule-pattern rule) input)))
+                 (if (not (eq result :fail))
+                     (sublis (switch-viewpoint result)
+                             (random-elt (rule-responses rule))))))
+           *eliza-rules*))))
+
+(defun undo-5.11 ()
+  (values (setf (symbol-function 'segment-match) *segment-match*)
+          (setf (symbol-function 'pat-match) *pat-match*)
+          (setf (symbol-function 'match-variable) *match-variable*)
+          (setf (symbol-function 'extend-bindings) *extend-bindings*)
+          (setf (symbol-function 'use-eliza-rules) *use-eliza-rules*)))
+  
+
+;;; 5.12

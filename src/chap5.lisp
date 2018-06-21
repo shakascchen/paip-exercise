@@ -13,18 +13,35 @@
 
 (in-package :paip-exercise-chap5)
 
-(defvar *segment-match* (symbol-function 'segment-match))
+;; (defvar *segment-match* (symbol-function 'segment-match))
 
-(defvar *pat-match* (symbol-function 'pat-match))
+;; (defvar *pat-match* (symbol-function 'pat-match))
 
-(defvar *match-variable* (symbol-function 'match-variable))
+;; (defvar *match-variable* (symbol-function 'match-variable))
 
-(defvar *extend-bindings* (symbol-function 'extend-bindings))
+;; (defvar *extend-bindings* (symbol-function 'extend-bindings))
 
-(defvar *use-eliza-rules* (symbol-function 'use-eliza-rules))
+;; (defvar *use-eliza-rules* (symbol-function 'use-eliza-rules))
 
-(defvar *eliza-basic* (symbol-function 'eliza))
+;; (defvar *eliza-basic* (symbol-function 'eliza))
 
+(defmacro do-exercise (exercise-number redefun-list &rest body)
+  `(progn
+     ,@(mapcar (lambda (redefun-function)
+                `(defvar ,(alexandria:symbolicate :* redefun-function :*)
+                   (symbol-function ',redefun-function)))
+              redefun-list)
+     (defun ,(alexandria:symbolicate :do-
+                                     (alexandria:make-keyword (write-to-string exercise-number))) 
+         ()
+       (values ,@body))
+     (defun ,(alexandria:symbolicate :undo-
+                                     (alexandria:make-keyword (write-to-string exercise-number)))
+         ()
+       (values ,@(mapcar (lambda (redefun-function)
+                           `(setf (symbol-function ',redefun-function)
+                                  ,(alexandria:symbolicate :* redefun-function :*)))
+                         redefun-list)))))
 ;;; 5.1
 ;; no, recall the reason! The answer is in the book.
 
@@ -106,8 +123,8 @@
 ;; ''A
 
 ;;; 5.6
-
-(defun do-5.6 ()
+(macroexpand-1 
+'(do-exercise 5.6 (eliza)
   (defun eliza ()
     "Respond to user input using pattern matching rules."
     (loop
@@ -115,10 +132,7 @@
       (format t "~{~a~^ ~}" (flatten (use-eliza-rules (anaphora:aprog1 (read)
                                                         (when (equal anaphora:it
                                                                      '(sayoonara))
-                                                          (return-from eliza)))))))))
-
-(defun undo-5.6 ()
-  (setf (symbol-function 'eliza) *eliza-basic*))
+                                                          (return-from eliza))))))))))
 
 ;;; 5.7
 
@@ -349,3 +363,5 @@
           (setf (symbol-function 'match-variable) *match-variable*)
           (setf (symbol-function 'extend-bindings) *extend-bindings*)
           (setf (symbol-function 'use-eliza-rules) *use-eliza-rules*)))
+
+;;; 5.13

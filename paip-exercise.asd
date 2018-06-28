@@ -13,7 +13,9 @@
                 :components
                 ((:file "chap3")
                  (:file "eliza-basic")
-                 (:file "chap5"))))
+                 (:file "chap5")
+                 (:file "util")
+                 (:file "chap6"))))
   :description ""
   :long-description
   #.(read-file-string

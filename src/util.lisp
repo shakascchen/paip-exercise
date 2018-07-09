@@ -5,14 +5,14 @@
            #:restore-fun))
 (in-package :paip-exercise-util)
 
-(defmacro redefun (function &rest body)
+(defmacro redefun (name &rest body)
   `(progn
-     (anaphora:sunless (get ',function :origin)
+     (anaphora:sunless (get ',name :origin)
        (setf anaphora:it
-             (symbol-function ',function)))
-     (defun ,function ()
+             (symbol-function ',name)))
+     (defun ,name ()
        ,@body)))
 
-(defun restore-fun (function-symbol)
-  (setf (symbol-function function-symbol) (get function-symbol :origin)))
+(defun restore-fun (symbol)
+  (setf (symbol-function symbol) (get symbol :origin)))
 

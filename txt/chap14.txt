@@ -1,0 +1,35 @@
+p. 466
+closed world assumption
+skolem constant vs.skolem function
+unique name assumption
+
+p. 477
+(write :circle t :array t :pretty t)
+
+p. 484
+Question
+show-prolog-vars
+(prove-all other-goals bindings depth) => there should be always nil as other-goals here?
+
+p. 491
+CHECK ERRATA
+ind should be val here
+(def-attached-fn rel (relation cat1 cat2)
+  ;; Run attached function for any IND's of this relation
+  (query-bind (?a ?b) `(ind ,relation ?a ?b)
+    (run-attached-fn `(ind ,relation ,?a ,?b))))
+
+p. 497
+truth maintenance system (TMS)
+
+
+p. 503
+logic = algorithm - control
+term-subsumption language
+
+p.504
+assumption-based truth maintentance system (ATMS)
+
+
+sample code
+there is no corresponding code in system paip between p.493~504
